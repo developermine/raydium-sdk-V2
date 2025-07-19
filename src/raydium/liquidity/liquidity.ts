@@ -1,61 +1,56 @@
-import { PublicKey, TransactionInstruction } from "@solana/web3.js";
 import {
-  AmmV4Keys,
-  AmmV5Keys,
-  ApiV3PoolInfoConcentratedItem,
-  ApiV3PoolInfoStandardItem,
-  FormatFarmInfoOutV6,
-} from "../../api/type";
-import { AccountLayout, NATIVE_MINT, TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { getMultipleAccountsInfoWithCustomFlags } from "@/common/accountInfo";
-import { BN_ZERO, divCeil } from "@/common/bignumber";
-import { getATAAddress } from "@/common/pda";
-import { BNDivCeil } from "@/common/transfer";
-import { MakeMultiTxData, MakeTxData } from "@/common/txTool/txTool";
-import { InstructionType, TxVersion } from "@/common/txTool/txType";
-import { Percent, Token, TokenAmount } from "../../module";
-import {
-  FARM_PROGRAM_TO_VERSION,
-  FarmLedger,
-  createAssociatedLedgerAccountInstruction,
-  getAssociatedLedgerAccount,
-  getFarmLedgerLayout,
-  makeWithdrawInstructionV3,
-  makeWithdrawInstructionV5,
-  makeWithdrawInstructionV6,
-} from "../../raydium/farm";
-import { ClmmInstrument } from "../clmm/instrument";
-import ModuleBase, { ModuleBaseProps } from "../moduleBase";
-import { toToken } from "../token";
-import { ComputeBudgetConfig } from "../type";
-import { LIQUIDITY_FEES_DENOMINATOR, LIQUIDITY_FEES_NUMERATOR } from "./constant";
-import {
-  createPoolV4InstructionV2,
-  makeAMMSwapInstruction,
-  makeAddLiquidityInstruction,
-  removeLiquidityInstruction,
-} from "./instruction";
-import { createPoolFeeLayout, liquidityStateV4Layout } from "./layout";
-import { StableLayout, getDxByDyBaseIn, getDyByDxBaseIn, getStablePrice } from "./stable";
-import {
-  AddLiquidityParams,
-  AmmRpcData,
-  AmountSide,
-  ComputeAmountInParam,
-  ComputeAmountOutParam,
-  CreatePoolAddress,
-  CreatePoolParam,
-  CreateMarketAndPoolParam,
-  RemoveParams,
-  SwapParam,
-} from "./type";
-import { getAssociatedConfigId, getAssociatedPoolKeys, toAmmComputePoolInfo } from "./utils";
+  AccountLayout, NATIVE_MINT, TOKEN_PROGRAM_ID,
+} from '@solana/spl-token';
+import { PublicKey, TransactionInstruction } from '@solana/web3.js';
+import BN from 'bn.js';
+import Decimal from 'decimal.js';
 
-import BN from "bn.js";
-import Decimal from "decimal.js";
-import { AMM_V4, DEVNET_PROGRAM_ID, FEE_DESTINATION_ID, OPEN_BOOK_PROGRAM, WSOLMint } from "@/common";
-import { generatePubKey } from "../account";
-import { makeCreateMarketInstruction, MarketExtInfo } from "../marketV2";
+import {
+  AMM_V4, DEVNET_PROGRAM_ID, FEE_DESTINATION_ID, OPEN_BOOK_PROGRAM, WSOLMint,
+} from '@/common';
+import { getMultipleAccountsInfoWithCustomFlags } from '@/common/accountInfo';
+import { BN_ZERO, divCeil } from '@/common/bignumber';
+import { getATAAddress } from '@/common/pda';
+import { BNDivCeil } from '@/common/transfer';
+import { MakeMultiTxData, MakeTxData } from '@/common/txTool/txTool';
+import { InstructionType, TxVersion } from '@/common/txTool/txType';
+
+import {
+  AmmV4Keys, AmmV5Keys, ApiV3PoolInfoConcentratedItem,
+  ApiV3PoolInfoStandardItem, FormatFarmInfoOutV6,
+} from '../../api/type';
+import { Percent, Token, TokenAmount } from '../../module';
+import {
+  createAssociatedLedgerAccountInstruction, FARM_PROGRAM_TO_VERSION, FarmLedger,
+  getAssociatedLedgerAccount, getFarmLedgerLayout, makeWithdrawInstructionV3,
+  makeWithdrawInstructionV5, makeWithdrawInstructionV6,
+} from '../../raydium/farm';
+import { generatePubKey } from '../account';
+import { ClmmInstrument } from '../clmm/instrument';
+import { makeCreateMarketInstruction, MarketExtInfo } from '../marketV2';
+import ModuleBase, { ModuleBaseProps } from '../moduleBase';
+import { toToken } from '../token';
+import { ComputeBudgetConfig } from '../type';
+
+import {
+  LIQUIDITY_FEES_DENOMINATOR, LIQUIDITY_FEES_NUMERATOR,
+} from './constant';
+import {
+  createPoolV4InstructionV2, makeAddLiquidityInstruction,
+  makeAMMSwapInstruction, removeLiquidityInstruction,
+} from './instruction';
+import { createPoolFeeLayout, liquidityStateV4Layout } from './layout';
+import {
+  getDxByDyBaseIn, getDyByDxBaseIn, getStablePrice, StableLayout,
+} from './stable';
+import {
+  AddLiquidityParams, AmmRpcData, AmountSide, ComputeAmountInParam,
+  ComputeAmountOutParam, CreateMarketAndPoolParam, CreatePoolAddress,
+  CreatePoolParam, RemoveParams, SwapParam,
+} from './type';
+import {
+  getAssociatedConfigId, getAssociatedPoolKeys, toAmmComputePoolInfo,
+} from './utils';
 
 export default class LiquidityModule extends ModuleBase {
   public stableLayout: StableLayout;
@@ -281,6 +276,10 @@ export default class LiquidityModule extends ModuleBase {
     });
     txBuilder.addCustomComputeBudget(computeBudgetConfig);
     txBuilder.addTipInstruction(txTipConfig);
+    if (params.platformFee) {
+      txBuilder.addTipInstruction(params.platformFee);
+    }
+
     if (txVersion === TxVersion.V0) return (await txBuilder.buildV0()) as MakeTxData<T>;
     return txBuilder.build() as MakeTxData<T>;
   }

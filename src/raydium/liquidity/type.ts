@@ -1,12 +1,16 @@
-import { PublicKey } from "@solana/web3.js";
-import BN from "bn.js";
-import Decimal from "decimal.js";
-import { AmmV4Keys, AmmV5Keys, ApiV3PoolInfoStandardItem } from "../../api/type";
-import { BigNumberish } from "../../common/bignumber";
-import { TxVersion } from "../../common/txTool/txType";
-import { TokenAmount } from "../../module/amount";
-import { ComputeBudgetConfig, TxTipConfig } from "../../raydium/type";
-import { liquidityStateV4Layout } from "./layout";
+import { PublicKey } from '@solana/web3.js';
+import BN from 'bn.js';
+import Decimal from 'decimal.js';
+
+import {
+  AmmV4Keys, AmmV5Keys, ApiV3PoolInfoStandardItem,
+} from '../../api/type';
+import { BigNumberish } from '../../common/bignumber';
+import { TxVersion } from '../../common/txTool/txType';
+import { TokenAmount } from '../../module/amount';
+import { ComputeBudgetConfig, TxTipConfig } from '../../raydium/type';
+
+import { liquidityStateV4Layout } from './layout';
 
 export type LiquiditySide = "a" | "b";
 export type AmountSide = "base" | "quote";
@@ -26,6 +30,7 @@ export interface AddLiquidityParams<T = TxVersion.LEGACY> {
   txVersion?: T;
   computeBudgetConfig?: ComputeBudgetConfig;
   txTipConfig?: TxTipConfig;
+  platformFee?: TxTipConfig;
   feePayer?: PublicKey;
 }
 
