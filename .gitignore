@@ -114,7 +114,7 @@ dist
 
 # misc
 .DS_Store
-lib/
+# lib/
 .coverage/
 docs/
 test/local/
